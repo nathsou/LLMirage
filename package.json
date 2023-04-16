@@ -1,0 +1,32 @@
+{
+  "name": "llmirage",
+  "private": false,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/uuid": "^9.0.1",
+    "@sveltejs/vite-plugin-svelte": "^2.0.3",
+    "@tsconfig/svelte": "^3.0.0",
+    "svelte": "^3.55.1",
+    "svelte-check": "^2.10.3",
+    "tslib": "^2.5.0",
+    "typescript": "^4.9.3",
+    "vite": "^4.2.0",
+    "ts-dedent": "^2.2.0",
+    "daisyui": "^2.51.5",
+    "postcss": "^8.4.21",
+    "tailwindcss": "^3.3.1",
+    "autoprefixer": "^10.4.14",
+    "uuid": "^9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nathsou/LLMirage"
+  }
+}
