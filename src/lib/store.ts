@@ -54,4 +54,5 @@ export const store = storable('llmirage', {
     historyIndex: 0,
     darkMode: false,
     temperature: 0.6,
+    specificationMode: false,
 });

@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { dedent } from "ts-dedent";
   import { v4 as uuidv4 } from "uuid";
-  import SettingsPanel from "./lib/SettingsPanel.svelte";
-  import { SSE } from "./lib/sse";
-  import { store, type Store } from "./lib/store";
-  import StarButton from "./lib/StarButton.svelte";
+  import { generate } from "./lib/generator";
   import Modal from "./lib/Modal.svelte";
+  import SettingsPanel from "./lib/SettingsPanel.svelte";
+  import StarButton from "./lib/StarButton.svelte";
+  import { store, type Store } from "./lib/store";
+  import type { SSE } from "./lib/sse";
 
   type Target = {
     uuid: string;
@@ -25,6 +25,7 @@
   let canGoForward = false;
   let isSettingsModalOpen = false;
   let darkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  let specificationMode = false;
   let temperature = 0;
   let target: Target = {
     uuid: "",
@@ -57,6 +58,7 @@
     canGoBack = historyIndex > 0;
     canGoForward = historyIndex < history.length - 1;
     darkMode = state.darkMode;
+    specificationMode = state.specificationMode;
     temperature = state.temperature;
     isSettingsModalOpen ||= OPENAI_API_KEY.trim().length === 0;
 
@@ -83,7 +85,7 @@
       uuid: uuidv4(),
       url: target.url,
       date: target.date,
-      starred: target.starred,
+      starred: false,
       ...partial,
     };
 
@@ -115,6 +117,7 @@
       historyIndex: 0,
       darkMode,
       temperature: state.temperature,
+      specificationMode: state.specificationMode,
     }));
   };
 
@@ -124,68 +127,32 @@
     }
 
     content.innerHTML = "";
-    let html = "<main>";
     isLoading = true;
 
-    const completion = new SSE("https://api.openai.com/v1/chat/completions", {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
+    const { cancel, instance } = await generate({
+      OPENAI_API_KEY,
+      url,
+      date,
+      temperature,
+      specificationMode,
+      onSpecification(spec) {
+        console.log(spec);
       },
-      method: "POST",
-      payload: JSON.stringify({
-        model: "gpt-3.5-turbo",
-        temperature,
-        stream: true,
-        messages: [
-          {
-            role: "system",
-            content: dedent`
-              You act as an HTML content generator for a website at a given URL and time.
-              The generated page should make sense and be a good representation of the website at the given date,
-              in terms of content, style, color palette etc...
-              Do not include scripts, images, svgs or lorem ipsums, only the template and inline styles using tailwind css (already imported).
-              The styles should look beautiful.
-              Images should be replaced with a placeholder rectangle containing the image's alt text.
-              Do not add any explanations, just generate the HTML content for the website.
-              If the date is in the future, imagine what the website will look like.
-              If the date is in the past, imagine what the website looked like or would have looked like.
-              If some placeholder text is needed, generate real-looking text.
-        `,
-          },
-          {
-            role: "user",
-            content: `url: https://${url}, date: ${date}`,
-          },
-        ],
-      }),
+      onMessage(html) {
+        content.innerHTML = html;
+      },
+      onComplete(html) {
+        isLoading = false;
+        content.innerHTML = html;
+        onPageGenerated(target, html);
+      },
     });
 
     if (sse) {
-      sse.close();
+      cancel();
     }
 
-    sse = completion;
-
-    const onMesssage = (e: any) => {
-      if (target.uuid !== uuid) {
-        completion.removeEventListener("message", onMesssage);
-        completion.close();
-      } else if (e.data === "[DONE]") {
-        onPageGenerated(target, html);
-      } else {
-        const payload = JSON.parse(e.data);
-        const delta = payload.choices[0].delta;
-
-        if ("content" in delta) {
-          html += delta.content;
-          content.innerHTML = html;
-        }
-      }
-    };
-
-    completion.addEventListener("message", onMesssage);
-    completion.stream();
+    sse = instance;
   };
 
   const onRefresh = () => {

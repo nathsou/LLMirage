@@ -3,11 +3,13 @@
 
     let openAIKey = "";
     let darkMode = false;
+    let specificationMode = false;
     let temperature = 0;
 
     store.subscribe((state) => {
         openAIKey = state.OPENAI_API_KEY;
         darkMode = state.darkMode;
+        specificationMode = state.specificationMode;
         temperature = state.temperature;
     });
 
@@ -22,6 +24,13 @@
         store.update((state) => ({
             ...state,
             darkMode: !state.darkMode,
+        }));
+    };
+
+    const toggleSpecificationMode = () => {
+        store.update((state) => ({
+            ...state,
+            specificationMode: !state.specificationMode,
         }));
     };
 
@@ -52,6 +61,16 @@
             class="toggle toggle-primary"
             checked={darkMode}
             on:change={toggleDarkMode}
+        />
+    </div>
+
+    <div class="form-control">
+        <span class="label-text font-semibold mb-1">Specification Mode</span>
+        <input
+            type="checkbox"
+            class="toggle toggle-primary"
+            checked={specificationMode}
+            on:change={toggleSpecificationMode}
         />
     </div>
 
