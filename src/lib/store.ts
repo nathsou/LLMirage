@@ -55,4 +55,5 @@ export const store = storable('llmirage', {
     darkMode: false,
     temperature: 0.6,
     specificationMode: false,
+    model: 'gpt-3.5-turbo',
 });

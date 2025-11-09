@@ -1,23 +1,65 @@
 <script lang="ts">
     import { store } from "./store";
+    import { fetchAvailableModels, getCheapestModel, type OpenAIModel } from "./models";
+    import { onMount } from "svelte";
 
     let openAIKey = "";
     let darkMode = false;
     let specificationMode = false;
     let temperature = 0;
+    let model = "gpt-3.5-turbo";
+    let availableModels: OpenAIModel[] = [];
+    let isLoadingModels = false;
 
     store.subscribe((state) => {
         openAIKey = state.OPENAI_API_KEY;
         darkMode = state.darkMode;
         specificationMode = state.specificationMode;
         temperature = state.temperature;
+        model = state.model;
     });
 
-    const updateApiKey = (key: string) => {
+    onMount(async () => {
+        if (openAIKey.trim().length > 0) {
+            await loadModels();
+        }
+    });
+
+    const loadModels = async () => {
+        if (openAIKey.trim().length === 0) {
+            return;
+        }
+
+        isLoadingModels = true;
+        try {
+            const models = await fetchAvailableModels(openAIKey);
+            availableModels = models;
+
+            // Set to cheapest model if current model is the default or not available
+            if (models.length > 0) {
+                const currentModelExists = models.some(m => m.id === model);
+                const isDefaultModel = model === 'gpt-3.5-turbo';
+                
+                if (isDefaultModel || !currentModelExists) {
+                    const cheapest = getCheapestModel(models);
+                    updateModel(cheapest);
+                }
+            }
+        } finally {
+            isLoadingModels = false;
+        }
+    };
+
+    const updateApiKey = async (key: string) => {
         store.update((state) => ({
             ...state,
             OPENAI_API_KEY: key,
         }));
+        
+        // Load models when API key is set
+        if (key.trim().length > 0) {
+            await loadModels();
+        }
     };
 
     const toggleDarkMode = () => {
@@ -40,6 +82,13 @@
             temperature: value,
         }));
     };
+
+    const updateModel = (value: string) => {
+        store.update((state) => ({
+            ...state,
+            model: value,
+        }));
+    };
 </script>
 
 <div class="flex flex-col gap-4 basis-96 grow-[0.25]">
@@ -52,6 +101,32 @@
             on:change={() => updateApiKey(openAIKey)}
             placeholder="Enter key..."
         />
+    </div>
+
+    <div class="form-control flex">
+        <span class="label-text font-semibold mb-1">Model</span>
+        {#if isLoadingModels}
+            <div class="text-sm">Loading models...</div>
+        {:else if availableModels.length > 0}
+            <select
+                class="select select-sm select-bordered"
+                bind:value={model}
+                on:change={() => updateModel(model)}
+            >
+                {#each availableModels as availableModel}
+                    <option value={availableModel.id}>{availableModel.id}</option>
+                {/each}
+            </select>
+        {:else}
+            <input
+                type="text"
+                class="input input-sm input-bordered"
+                bind:value={model}
+                on:change={() => updateModel(model)}
+                placeholder="gpt-3.5-turbo"
+            />
+            <span class="text-xs text-gray-500 mt-1">Enter API key to load available models</span>
+        {/if}
     </div>
 
     <div class="form-control">

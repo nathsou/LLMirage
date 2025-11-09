@@ -27,6 +27,7 @@
   let darkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
   let specificationMode = false;
   let temperature = 0;
+  let model = "gpt-3.5-turbo";
   let target: Target = {
     uuid: "",
     url: "",
@@ -60,6 +61,7 @@
     darkMode = state.darkMode;
     specificationMode = state.specificationMode;
     temperature = state.temperature;
+    model = state.model;
     isSettingsModalOpen ||= OPENAI_API_KEY.trim().length === 0;
 
     if (historyIndex < history.length) {
@@ -118,6 +120,7 @@
       darkMode,
       temperature: state.temperature,
       specificationMode: state.specificationMode,
+      model: state.model,
     }));
   };
 
@@ -135,6 +138,7 @@
       date,
       temperature,
       specificationMode,
+      model,
       onSpecification(spec) {
         console.log(spec);
       },
