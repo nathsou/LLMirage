@@ -7,6 +7,7 @@ type Options = {
   date: string;
   temperature: number;
   specificationMode: boolean;
+  model: string;
   onMessage: (html: string) => void;
   onComplete: (html: string) => void;
   onSpecification?: (specification: string) => void;
@@ -55,6 +56,7 @@ export const generate = async ({
   date,
   temperature,
   specificationMode,
+  model,
   onMessage,
   onComplete,
   onSpecification,
@@ -68,7 +70,7 @@ export const generate = async ({
           },
           method: "POST",
           body: JSON.stringify({
-            model: "gpt-3.5-turbo",
+            model,
             temperature,
             stream: false,
             messages: [
@@ -110,7 +112,7 @@ export const generate = async ({
     },
     method: "POST",
     payload: JSON.stringify({
-      model: "gpt-3.5-turbo",
+      model,
       temperature,
       stream: true,
       messages: [
