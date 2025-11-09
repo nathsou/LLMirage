@@ -35,10 +35,12 @@
             const models = await fetchAvailableModels(openAIKey);
             availableModels = models;
 
-            // Set default to cheapest model if not already set or if current model is not available
+            // Set to cheapest model if current model is the default or not available
             if (models.length > 0) {
                 const currentModelExists = models.some(m => m.id === model);
-                if (!currentModelExists) {
+                const isDefaultModel = model === 'gpt-3.5-turbo';
+                
+                if (isDefaultModel || !currentModelExists) {
                     const cheapest = getCheapestModel(models);
                     updateModel(cheapest);
                 }
